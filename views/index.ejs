@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      .dark {
+        background-color: black;
+      }
+      .light {
+        background-color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="btn">Start recording voice</button>
+    <div id="content"></div>
+
+    <script type="module">
+      const button = document.getElementById("btn");
+      const content = document.getElementById("content");
+      const body = document.getElementsByTagName("body");
+
+      const SpeechRec =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRec();
+
+      recognition.onstart = () => {
+        console.log("voice recording started");
+      };
+      recognition.onresult = async(e) => {
+        const current = e.resultIndex;
+        let transcript = e.results[current][0].transcript;
+        content.textContent = transcript;
+        if (transcript.includes("hey woman")) {
+          transcript = "I am not your woman here comes the slap";
+        } else if (transcript.includes("why am I single")) {
+          transcript = "Look in the mirror";
+        } else if (transcript.includes("dark mode")) {
+          body[0].classList.add("dark");
+        } else if (transcript.includes("light mode")) {
+          body[0].classList.replace("dark", "light");
+        }
+        readOut(transcript);
+        const result = await fetch("http://localhost:5100/voice", {
+            method: "POST",
+            headers: {
+                "Content-type": "application/json"
+            },
+            body: JSON.stringify({
+                message: e.results[current][0].transcript
+            })
+        })
+        const data = await result.json();
+        console.log(data)
+      };
+
+      function readOut(message) {
+        const speech = new SpeechSynthesisUtterance();
+        speech.rate = 1;
+        speech.text = message;
+        speech.volume = 1;
+
+        window.speechSynthesis.speak(speech);
+      }
+
+      button.addEventListener("click", (e) => {
+        e.preventDefault();
+        recognition.start();
+      });
+    </script>
+  </body>
+</html>
